@@ -1934,11 +1934,11 @@ tbody.collapse.in {
   -webkit-transition-timing-function: ease;
   transition-timing-function: ease;
 }
-@font-face {
+/* @font-face {
   font-family: 'Glyphicons Halflings';
   src: url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.eot');
   src: url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.woff2') format('woff2'), url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.woff') format('woff'), url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.ttf') format('truetype'), url('statexpflat/fonts/glyphicons/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
-}
+} */
 .glyphicon {
   position: relative;
   top: 1px;
@@ -5848,22 +5848,22 @@ button.close {
     display: none !important;
   }
 }
-@font-face {
+/* @font-face {
   font-family: open_sanssemibold;
   src: url(statexpflat/fonts/opensans/OpenSans-Semibold.ttf);
-}
-@font-face {
+} */
+/* @font-face {
   font-family: open_sansregular;
   src: url(statexpflat/fonts/opensans/OpenSans-Regular.ttf);
-}
-@font-face {
+} */
+/* @font-face {
   font-family: open_sansbold;
   src: url(statexpflat/fonts/opensans/OpenSans-Bold.ttf);
-}
-@font-face {
+} */
+/* @font-face {
   font-family: roboto_condensedregular;
   src: url(statexpflat/fonts/roboto/RobotoCondensed-Regular.ttf);
-}
+} */
 @font-face {
   font-family: roboto_condensedbold;
   src: url(statexpflat/fonts/roboto/RobotoCondensed-Bold.ttf);
@@ -5895,12 +5895,12 @@ a:hover {
 }
 #bodyContent a.external,
 #bodyContent a[href^="gopher://"] {
-  background: url(../media/external.png) center right no-repeat;
+  /* background: url(../media/external.png) center right no-repeat; */
   padding-right: 13px;
 }
 #bodyContent a[href^="https://"],
 .link-https {
-  background: url(../medialock_icon.gif) center right no-repeat;
+  /* background: url(../medialock_icon.gif) center right no-repeat; */
   padding-right: 16px;
 }
 #bodyContent a[href^="mailto:"],
@@ -6268,7 +6268,7 @@ a:hover {
   content: " | ";
 }
 .header .login .login-icon {
-  background-image: url(../media/login.png);
+  /* background-image: url(../media/login.png); */
   background-repeat: no-repeat;
   width: 17px;
   height: 25px;
@@ -6301,7 +6301,7 @@ a:hover {
 .header .flag {
   width: 53px;
   height: 34px;
-  background-image: url(../media/flag.png);
+  /* background-image: url(../media/flag.png); */
   background-repeat: no-repeat;
   position: absolute;
   z-index: 999;
@@ -6310,7 +6310,7 @@ a:hover {
   width: 45px;
   height: 30px;
   margin-left: 15px;
-  background-image: url(../media/flag-mobile.png);
+  /* background-image: url(../media/flag-mobile.png); */
   background-repeat: no-repeat;
   position: absolute;
   z-index: 999;
@@ -6324,7 +6324,7 @@ a:hover {
   }
 }
 .header .heading .lighthouse {
-  background-image: url(../media/lighthouse.png);
+  /* background-image: url(../media/lighthouse.png); */
   background-repeat: no-repeat;
   width: 129px;
   height: 101px;
@@ -6457,7 +6457,7 @@ a:hover {
 }
 .header .heading .statexptitle {
   position: absolute;
-  background-image: url(../media/StatExplainedTitle-02.png);
+  /* background-image: url(../media/StatExplainedTitle-02.png); */
   background-repeat: no-repeat;
 }
 @media (min-width: 768px) {
