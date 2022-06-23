@@ -94,9 +94,7 @@ getDataPoints();
 
 function getDataPoints()
 {
-    const noCacheURL = `https://canvasjs.com/services/data/datapoints.php?cache=${Math.random() * 1000000}`;
-
-    fetch(noCacheURL)
+    fetch("https://canvasjs.com/services/data/datapoints.php", {cache: "reload"})
     .then(response => {
         return response.json();
     })
