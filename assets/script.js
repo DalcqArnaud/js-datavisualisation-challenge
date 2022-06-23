@@ -1,5 +1,6 @@
 var table1 = document.getElementById("table1");
 var table2 = document.getElementById("table2");
+var bodyContent = document.getElementById("bodyContent");
 
 //Set up graph 1 Labels
 var graph1LabelsArray = [];
@@ -31,13 +32,13 @@ table1RowsArray.forEach(element => {
 });
 
 //Set up graph 1 Data Objects
-var graph1DataObjectsArray = CreateLineGraphDataObjectsArray(table1DatasArray, table1DataLabelsArray);
+var graph1DataObjectsArray = CreateMultipleLinesGraphDataObjectsArray(table1DatasArray, table1DataLabelsArray);
 
 //Set up graph 1 aria label
 var graph1ArialLabel = "Graph about the crimes recorded by the police on 10 years in differents countries";
 
 //create graph 1 
-CreateGraph(table1, "graph1", "800px", "600px", graph1ArialLabel, "img", graph1LabelsArray, graph1DataObjectsArray, {}, "line");
+CreateGraph(null, table1, "graph1", "graph1", "800px", "600px", graph1ArialLabel, "img", graph1LabelsArray, graph1DataObjectsArray, {}, "line");
 
 //Set up graph 2 and 2Bis Titles and Subtitles
 var graph2Title = table2.querySelector("caption").textContent;
@@ -70,44 +71,103 @@ var graph2BisDataObjectsArray = CreatePieGraphDataObjectsArray(graph2BisDatasArr
 var graph2ArialLabel = "Graph about the prison population on average during years 2007-09 in different countries";
 var graph2BisArialLabel = "Graph about the prison population on average during years 2010-12 in different countries";
 
-//create graph 2 
-var graph2 = CreateGraph(null, "graph2", "400px", "400px", graph2ArialLabel, "img", graph2DataLabelsArray, graph2DataObjectsArray, graph2Options, "pie");
-
-//create graph 2 bis
-var graph2Bis = CreateGraph(null, "graph2Bis", "400px", "400px", graph2BisArialLabel, "img", graph2DataLabelsArray, graph2BisDataObjectsArray, graph2BisOptions, "pie");
-
 //Create graph 2 div 
 var graph2Div = document.createElement("div");
 var graph2MainTitle = document.createElement("p");
 graph2MainTitle.textContent = graph2Title;
 graph2MainTitle.setAttribute("class", "col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center");
-
-graph2.setAttribute("class", "col-lg-6 col-md-6 col-sm-6 col-xs-6");
-graph2Bis.setAttribute("class", "col-lg-6 col-md-6 col-sm-6 col-xs-6");
-
 graph2Div.appendChild(graph2MainTitle);
-graph2Div.appendChild(graph2);
-graph2Div.appendChild(graph2Bis);
+
+//create graph 2 
+var graph2 = CreateGraph(graph2Div, null, "col-lg-6 col-md-6 col-sm-6 col-xs-6", "graph2", "400px", "400px", graph2ArialLabel, "img", graph2DataLabelsArray, graph2DataObjectsArray, graph2Options, "pie").canvas;
+
+//create graph 2 bis
+var graph2Bis = CreateGraph(graph2Div, null, "col-lg-6 col-md-6 col-sm-6 col-xs-6", "graph2Bis", "400px", "400px", graph2BisArialLabel, "img", graph2DataLabelsArray, graph2BisDataObjectsArray, graph2BisOptions, "pie").canvas;
 
 table2.parentNode.insertBefore(graph2Div, table2);
 
+var graphServerDataLabelsArray = [];
+var graphServer = null;
+var iterationCount = 0;
+
+getDataPoints();
+
+function getDataPoints()
+{
+    const noCacheURL = `https://canvasjs.com/services/data/datapoints.php?cache=${Math.random() * 1000000}`;
+
+    fetch(noCacheURL)
+    .then(response => {
+        return response.json();
+    })
+    .then(datapoints => {
+        UpdateGraph(datapoints);
+    });
+
+    setTimeout(() => {
+        getDataPoints();
+    }, 1000);
+}
+
+function UpdateGraph(dataArray){
+    
+    if(graphServer != null){
+        var tempLabelArray = [];
+        var tempDataArray = [];
+        dataArray.forEach(element => {
+            tempLabelArray.push((iterationCount * dataArray.length) + element[0]);
+            var newData = [iterationCount * dataArray.length + element[0], element[1]];
+            tempDataArray.push(newData);
+        });
+        addData(graphServer, tempLabelArray, tempDataArray);
+        iterationCount++;
+    }else{
+        var graphServerAriaLabel = "Example live graph";
+        var graphServerDataName = "Remote Data"
+        var tempLabelArray = [];
+        dataArray.forEach(element => {
+            tempLabelArray.push(element[0]);
+        });
+        graphServerDataLabelsArray = tempLabelArray;
+        var graphServerDataObjectsArray = CreateSingleLineGraphDataObjectsArray(dataArray, graphServerDataName, 0 , 5);
+        graphServer = CreateGraph(null, bodyContent, "graphServer", "graphServer", "800px", "400px", graphServerAriaLabel, "img", graphServerDataLabelsArray, graphServerDataObjectsArray, {}, "line");
+        iterationCount++;
+    }
+}
 
 //////////////////////////////////////////////////////////////////////////// CUSTOM FUNCTIONS ////////////////////////////////////////////////////////////////////////////
 
+function addData(chart, label, dataPoints) {
+    for(let i in label){
+        chart.config.data.labels.push(label[i]);
+    }
+    for(let j in dataPoints){
+        chart.config.data.datasets.forEach((dataset) => {
+            dataset.data.push(dataPoints[j]);
+        });
+    }
+    chart.update();
+}
+
 /**
- * Function to create a graph
- * @param {Element} referenceTable The table used as a reference. It contains the datas of the graph and will be placed just below the graph
- * @param {String} graphId The id of the graph
- * @param {String} graphWidth The width in pixels of the graph
- * @param {String} graphHeight The height in pixels of the graph
- * @param {Array} graphLabels The Array of Labels for the graph
- * @param {Array} graphDatas The Array of Datas Objects used in the graph to draw lines (each graph object has an array of values, a label and a color)
- * @param {Object} graphOptions The options Objects used to customize the graph
- * @param {String} graphConfigType The type of the graph (cf all graph types of chart.js)
+ * Function to create a graph with the given parameters
+ * @param {Element} parentElement The parent element to append the canvas (if no need then give it a null)
+ * @param {Element} referenceTable The table used as a reference. It contains the datas of the graph and will be placed just below the graph (if no need then give it a null)
+ * @param {String} graphClass The class of the graph canvas
+ * @param {String} graphId The id of the graph canvas
+ * @param {*} graphWidth The width in pixels of the graph canvas
+ * @param {*} graphHeight The height in pixels of the graph canvas
+ * @param {*} graphAriaLabel The aria label of the graph
+ * @param {*} graphRole the role of the graph
+ * @param {*} graphLabels The Array of Labels for the graph
+ * @param {*} graphDatas The Array of Datas Objects used in the graph to draw datas
+ * @param {*} graphOptions The options Objects used to customize the graph
+ * @param {*} graphConfigType The type of the graph (see all graph types of chart.js)
  * @returns the created graph
  */
-function CreateGraph(referenceTable, graphId, graphWidth, graphHeight, graphAriaLabel, graphRole, graphLabels, graphDatas, graphOptions, graphConfigType){
+function CreateGraph(parentElement, referenceTable, graphClass, graphId, graphWidth, graphHeight, graphAriaLabel, graphRole, graphLabels, graphDatas, graphOptions, graphConfigType){
     var graphCanvas = document.createElement("canvas");
+    graphCanvas.setAttribute("class", graphClass);
     graphCanvas.setAttribute("id", graphId);
     graphCanvas.setAttribute("width", graphWidth);
     graphCanvas.setAttribute("height", graphHeight);
@@ -128,13 +188,17 @@ function CreateGraph(referenceTable, graphId, graphWidth, graphHeight, graphAria
     options: options
     };
 
-    new Chart(ctx, config);
+    var graphChart = new Chart(ctx, config);
+
+    if(parentElement != null){
+        parentElement.appendChild(graphCanvas);
+    }
 
     if(referenceTable != null){
         referenceTable.parentNode.insertBefore(graphCanvas, referenceTable);
     }
 
-    return graphCanvas;
+    return graphChart;
 }
 
 /**
@@ -174,7 +238,7 @@ function CreateGraphOptions(responsive, title, subtitle){
  * @param {Array} dataLabelsArray Array of data labels
  * @returns An array of data Objects
  */
-function CreateLineGraphDataObjectsArray(datasArray, dataLabelsArray){
+function CreateMultipleLinesGraphDataObjectsArray(datasArray, dataLabelsArray){
     var dataObjectsArray = [];
 
     for(let i = 0; i < datasArray.length; i++){
@@ -186,6 +250,35 @@ function CreateLineGraphDataObjectsArray(datasArray, dataLabelsArray){
     }
 
     return dataObjectsArray;
+}
+
+function CreateSingleLineGraphDataObjectsArray(datasArray, dataLabelsArray, pointRadius, pointRadiusHover){
+    var dataObjectsArray = [];
+
+    let obj = new Object();
+    obj.data = datasArray;
+    obj.label = dataLabelsArray;
+    let randomColorOpacity = 1;
+    let randomColor = `rgba(${randomNumber0Max(255)}, ${randomNumber0Max(255)}, ${randomNumber0Max(255)}, ${randomColorOpacity})`;
+    randomColorTransparent = changeColorOpacity(randomColor, 0.5);
+    obj.borderColor = randomColor;
+    obj.backgroundColor = randomColorTransparent;
+    obj.pointRadius = pointRadius;
+    obj.pointHoverRadius = pointRadiusHover;
+    dataObjectsArray.push(obj);
+
+    return dataObjectsArray;
+}
+
+function changeColorOpacity(colorString, newOpacity){
+    let colorChannels = colorString.split(",");
+    colorChannels[colorChannels.length - 1] = (" " + newOpacity + ")");
+    
+    let newColor = "";
+    colorChannels.forEach((element, index) => {
+        newColor += index == colorChannels.length-1 ? element : element + ",";
+    });
+    return newColor;
 }
 
 /**
