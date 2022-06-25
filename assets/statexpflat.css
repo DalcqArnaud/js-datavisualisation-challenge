@@ -7865,9 +7865,10 @@ a .fa-print {
   display: block;
 }
 .dropdown .dropdown-menu {
-  width: 100%;
+  /*width: 100%;*/
+  left: 40%;
   margin: 0;
-  top: 30px;
+  top: 40px;
 }
 .dropdown .dropdown-menu:hover {
   display: block;
