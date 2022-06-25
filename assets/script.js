@@ -3,6 +3,8 @@ var table2 = document.getElementById("table2");
 var bodyContent = document.getElementById("bodyContent");
 var mainColText = "rgba(40, 115, 230, 1)";
 var secondColText = "rgba(242, 139, 180, 1)";
+var isDescendingSorting = false;
+var isSortingDatasets = true;
 
 //////////////////////////////////////////////////////////////////// GRAPH 1 ////////////////////////////////////////////////////////////////////
 //Set up graph 1 Labels
@@ -40,8 +42,41 @@ var graph1DataObjectsArray = CreateGraphDataObjectsArray(table1DatasArray.length
 //Set up graph 1 aria label
 var graph1ArialLabel = "Graph about the crimes recorded by the police on 10 years in differents countries";
 
+//Create graph 2 div 
+var graph1Title = "Offences recorded by the police, 2002-12"
+var graph1Div = document.createElement("div");
+var graph1MainTitleText = document.createElement("p");
+graph1Div.appendChild(graph1MainTitleText);
+var graph1MainTitle = document.createElement("strong");
+graph1MainTitle.textContent = graph1Title;
+graph1MainTitle.setAttribute("class", "col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center");
+graph1MainTitleText.appendChild(graph1MainTitle);
+
+var graph1ConfigObject = {
+    parentElement : graph1Div,
+    referenceTable: null,
+    graphClass: "graph1",
+    graphId: "graph1",
+    graphWidth: "800px",
+    graphHeight: "600px",
+    graphAriaLabel: graph1ArialLabel,
+    graphRole: "img",
+    graphLabels: graph1LabelsArray,
+    graphDatas: graph1DataObjectsArray,
+    graphOptions: {},
+    graphConfigType: "line"
+}
+
 //create graph 1 
-CreateGraph(null, table1, "graph1", "graph1", "800px", "600px", graph1ArialLabel, "img", graph1LabelsArray, graph1DataObjectsArray, {}, "line");
+var graph1 = CreateGraph(graph1ConfigObject);
+
+table1.parentNode.insertBefore(graph1Div, table1);
+
+var graph1OrderOptions = ["Alphabetical order", "Ascending order", "Descending order"];
+var graph1OrderFunctions = [SortByAlphabeticalOrder, SortByAscendingOrder, SortByDescendingOrder];
+var graph1Element = document.getElementById("graph1");
+
+CreateDropDownSortByButton(graph1, graph1.config.data.datasets, graph1Element, graph1OrderOptions, graph1OrderFunctions);
 
 //////////////////////////////////////////////////////////////////// GRAPH 2 ////////////////////////////////////////////////////////////////////
 
@@ -59,7 +94,7 @@ var graph2DataLabelsArray = [];
 var table2RowsArray = Array.from(table2.querySelectorAll("tbody>tr"));
 table2RowsArray.forEach(element => {
     let table2TDsArray = Array.from(element.querySelectorAll("td"));
-    graph2DataLabelsArray.push(table2TDsArray[0].textContent);
+    graph2DataLabelsArray.push(RemoveExtraSpaces(RemoveExposantCharacters(table2TDsArray[0].textContent)));
     graph2DatasArray.push(parseFloat(table2TDsArray[1].textContent));
     graph2BisDatasArray.push(parseFloat(table2TDsArray[2].textContent));
 });
@@ -74,15 +109,59 @@ var graph2ArialLabel = "Graph about the prison population on average during year
 
 //Create graph 2 div 
 var graph2Div = document.createElement("div");
-var graph2MainTitle = document.createElement("p");
+var graph2MainTitleText = document.createElement("p");
+graph2Div.appendChild(graph2MainTitleText);
+var graph2MainTitle = document.createElement("strong");
 graph2MainTitle.textContent = graph2Title;
-graph2MainTitle.setAttribute("class", "col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center");
-graph2Div.appendChild(graph2MainTitle);
+graph2MainTitle.setAttribute("class", "col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center fw-bolder");
+graph2MainTitleText.appendChild(graph2MainTitle);
+
+var graph2ConfigObject = {
+    parentElement : graph2Div,
+    referenceTable: null,
+    graphClass: "graph2",
+    graphId: "graph2",
+    graphWidth: "800px",
+    graphHeight: "600px",
+    graphAriaLabel: graph2ArialLabel,
+    graphRole: "img",
+    graphLabels: graph2DataLabelsArray,
+    graphDatas: graph2DataObjectsArray,
+    graphOptions: {},
+    graphConfigType: "bar"
+}
 
 //create graph 2 
-var graph2 = CreateGraph(graph2Div, null, "graph2", "graph2", "800px", "600px", graph2ArialLabel, "img", graph2DataLabelsArray, graph2DataObjectsArray, {}, "bar");
+var graph2 = CreateGraph(graph2ConfigObject);
 
 table2.parentNode.insertBefore(graph2Div, table2);
+
+var graph2OrderOptions = ["Alphabetical order", "Ascending order", "Descending order"];
+var graph2OrderFunctions = [SortByAlphabeticalOrder, SortByAscendingOrder, SortByDescendingOrder];
+var graph2Element = document.getElementById("graph2");
+
+var graph2DatasToSortArray = [];
+
+//Get all datas needed to sort the graph datas and store them in objects (each properties is a set of nedded datas)
+graph2DatasArray.forEach((element, index) => {
+    var graph2DatasToSortObject = new Object();
+    graph2DatasToSortObject.labels = graph2ConfigObject.graphLabels[index];
+    graph2DatasToSortObject.dataValues = [];
+    graph2DatasToSortObject.datasetsNames = graph2NamesArray;
+
+    graph2DatasToSortObject.dataValues.push(element);
+    graph2DatasToSortObject.dataValues.push(graph2BisDatasArray[index]);
+    
+    // let tempDatasArray = [];
+    // tempDatasArray.push(element);
+    // tempDatasArray.push(graph2BisDatasArray[index]);
+    // let tempAverage = GetAverage(tempDatasArray);
+    // graph2DatasToSortObject.dataValues.push(tempAverage)
+
+    graph2DatasToSortArray.push(graph2DatasToSortObject);
+});
+
+CreateDropDownSortByButton(graph2, graph2DatasToSortArray, graph2Element, graph2OrderOptions, graph2OrderFunctions);
 
 //////////////////////////////////////////////////////////////////// GRAPH 3 ////////////////////////////////////////////////////////////////////
 
@@ -122,7 +201,23 @@ function HandleAPIData(dataArray){
             tempLabelArray.push(element[0]);
         });
         var graphServerDataObjectsArray = CreateGraphDataObjectsArray(1, dataArray, graph3DataName, mainColText, secondColText, 0, 10);
-        graph3 = CreateGraph(null, bodyContent, "graphServer", "graphServer", "800px", "400px", graph3AriaLabel, "img", tempLabelArray, graphServerDataObjectsArray, {}, "line");
+
+        var graph3ConfigObject = {
+            parentElement : null,
+            referenceTable: bodyContent,
+            graphClass: "graphServer",
+            graphId: "graphServer",
+            graphWidth: "800px",
+            graphHeight: "400px",
+            graphAriaLabel: graph3AriaLabel,
+            graphRole: "img",
+            graphLabels: tempLabelArray,
+            graphDatas: graphServerDataObjectsArray,
+            graphOptions: {},
+            graphConfigType: "line"
+        }
+
+        graph3 = CreateGraph(graph3ConfigObject);
         iterationCount++;
     }else{
         var tempLabelArray = [];
@@ -139,6 +234,160 @@ function HandleAPIData(dataArray){
 
 //////////////////////////////////////////////////////////////////////////// GENERALS FUNCTIONS ////////////////////////////////////////////////////////////////////////////
 
+function SortByAlphabeticalOrder(chart, dataToSort){
+    if(dataToSort == chart.config.data.datasets){
+        isSortingDatasets = true;
+        dataToSort.sort(compareLabels);
+        chart.update();
+    }
+    else{
+        isSortingDatasets = false;
+        let sortedData = dataToSort.sort(compareLabels);
+        let tempSortedAllLabelsArray = [];
+        let tempSortedAllDataArray = [];
+        let tempSortedFirstDataArray = [];
+        let tempSortedSecondDataArray = [];
+        sortedData.forEach(element => {
+            tempSortedAllLabelsArray.push(element.labels)
+            tempSortedFirstDataArray.push(element.dataValues[0]);
+            tempSortedSecondDataArray.push(element.dataValues[1]);
+        });
+        tempSortedAllDataArray.push(tempSortedFirstDataArray);
+        tempSortedAllDataArray.push(tempSortedSecondDataArray);
+
+        var tempDataObjectsArray = CreateGraphDataObjectsArray(tempSortedAllDataArray.length, tempSortedAllDataArray, sortedData[0].datasetsNames, mainColText, secondColText);
+        
+        changeData(chart, tempSortedAllLabelsArray, tempDataObjectsArray);
+    }
+
+}
+
+function SortByAscendingOrder(chart, dataToSort){
+    isDescendingSorting = false;
+    if(dataToSort == chart.config.data.datasets){
+        isSortingDatasets = true;
+        dataToSort.sort(compareDataAverages);
+        chart.update();
+    }
+    else{
+        isSortingDatasets = false;
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        // let sortedData = dataToSort.sort(compareLabels);
+        // let tempSortedAllLabelsArray = [];
+        // let tempSortedAllDataArray = [];
+        // let tempSortedFirstDataArray = [];
+        // let tempSortedSecondDataArray = [];
+        // sortedData.forEach(element => {
+        //     tempSortedAllLabelsArray.push(element.labels)
+        //     tempSortedFirstDataArray.push(element.dataValues[0]);
+        //     tempSortedSecondDataArray.push(element.dataValues[1]);
+        // });
+        // tempSortedAllDataArray.push(tempSortedFirstDataArray);
+        // tempSortedAllDataArray.push(tempSortedSecondDataArray);
+
+        // var tempDataObjectsArray = CreateGraphDataObjectsArray(tempSortedAllDataArray.length, tempSortedAllDataArray, sortedData[0].datasetsNames, mainColText, secondColText);
+        
+        // changeData(chart, tempSortedAllLabelsArray, tempDataObjectsArray);
+    }
+}
+
+function SortByDescendingOrder(chart, dataToSort){
+    isDescendingSorting = true;
+    if(dataToSort == chart.config.data.datasets){
+        isSortingDatasets = true;
+        dataToSort.sort(compareDataAverages);
+        chart.update();
+    }
+    else{
+        isSortingDatasets = false;
+
+        // let sortedData = dataToSort.sort(compareLabels);
+        // let tempSortedAllLabelsArray = [];
+        // let tempSortedAllDataArray = [];
+        // let tempSortedFirstDataArray = [];
+        // let tempSortedSecondDataArray = [];
+        // sortedData.forEach(element => {
+        //     tempSortedAllLabelsArray.push(element.labels)
+        //     tempSortedFirstDataArray.push(element.dataValues[0]);
+        //     tempSortedSecondDataArray.push(element.dataValues[1]);
+        // });
+        // tempSortedAllDataArray.push(tempSortedFirstDataArray);
+        // tempSortedAllDataArray.push(tempSortedSecondDataArray);
+
+        // var tempDataObjectsArray = CreateGraphDataObjectsArray(tempSortedAllDataArray.length, tempSortedAllDataArray, sortedData[0].datasetsNames, mainColText, secondColText);
+        
+        // changeData(chart, tempSortedAllLabelsArray, tempDataObjectsArray);
+    }
+}
+
+function compareDataAverages(a, b){
+    var aSum = 0;
+    var aDataCount = 0;
+    var bSum = 0;
+    var bDataCount = 0;
+
+    if(isSortingDatasets){
+        a.data.forEach(element => {
+                aSum += element;
+                aDataCount++;
+        });
+        b.data.forEach(element => {
+                bSum += element;
+                bDataCount++;
+        });
+    
+        var aAverage = aSum / aDataCount;
+        var bAverage = bSum / bDataCount;
+        
+        if(aAverage < bAverage){
+            return (isDescendingSorting ? 1 : -1);
+        }
+        if(aAverage > bAverage){
+            return (isDescendingSorting ? -1 : 1);
+        }
+        return 0;
+    }
+    else{
+
+    }
+}
+
+function compareLabels(a, b){
+    if(isSortingDatasets){
+        if(a.label < b.label){
+            return -1;
+        }
+        if(a.label > b.label){
+            return 1;
+        }
+        return 0;
+    }else{
+        if(a.labels < b.labels){
+            return -1;
+        }
+        if(a.labels > b.labels){
+            return 1;
+        }
+        return 0;
+    }
+}
+
+function changeData(chart, newLabels, newDataPoints) {
+    chart.config.data.labels = newLabels;
+
+    chart.config.data.datasets.forEach((dataset, index) => {
+        dataset.data = newDataPoints[index].data;
+        dataset.label = newDataPoints[index].label;
+        dataset.boderColor = newDataPoints[index].boderColor;
+        dataset.backgroundColor = newDataPoints[index].backgroundColor;
+    });
+    chart.update();
+}
 
 /**
  * Add datas and update a Chart with them
@@ -159,52 +408,78 @@ function addData(chart, label, dataPoints) {
 }
 
 /**
- * Function to create a graph with the given parameters
- * @param {Element} parentElement The parent element to append the canvas (if no need then give it a null)
- * @param {Element} referenceTable The table used as a reference. It contains the datas of the graph and will be placed just below the graph (if no need then give it a null)
- * @param {String} graphClass The class of the graph canvas
- * @param {String} graphId The id of the graph canvas
- * @param {String} graphWidth The width in pixels of the graph canvas
- * @param {String} graphHeight The height in pixels of the graph canvas
- * @param {String} graphAriaLabel The aria label of the graph
- * @param {String} graphRole the role of the graph
- * @param {Array} graphLabels The Array of Labels for the graph
- * @param {Array} graphDatas The Array of Datas Objects used in the graph to draw datas
- * @param {Object} graphOptions The options Objects used to customize the graph
- * @param {String} graphConfigType The type of the graph (see all graph types of chart.js)
- * @returns the created graph
+ * Create a drop down button used to sort a given graph datas
+ * @param {Chart} chartGraph The ChartGraph to be sort (by the dropdown sorting options)
+ * @param {Element} referenceGraph The Element to insert the drop down button before it
+ * @param {Array} orderOptionsArray an array of the sorting options names
+ * @param {*} orderFunctionsArray an array of the sorting options functions
  */
-function CreateGraph(parentElement, referenceTable, graphClass, graphId, graphWidth, graphHeight, graphAriaLabel, graphRole, graphLabels, graphDatas, graphOptions, graphConfigType){
+function CreateDropDownSortByButton(chartGraph, dataToSort, referenceGraph, orderOptionsArray, orderFunctionsArray){
+    var dropdownDiv = document.createElement("div");
+    dropdownDiv.setAttribute("class", "dropdown col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center");
+
+    var dropdownButton = document.createElement("button");
+    dropdownButton.setAttribute("class", "btn btn-primary dropdown-toggle");
+    dropdownButton.setAttribute("type", "button");
+    dropdownButton.setAttribute("data-bs-toggle", "dropdown");
+    dropdownButton.setAttribute("aria-expanded", "false");
+    dropdownButton.style.margin = "10px";
+    dropdownButton.textContent = "Sort by";
+    dropdownDiv.appendChild(dropdownButton);
+
+    var dropDownMenu = document.createElement("ul");
+    dropDownMenu.setAttribute("class", "dropdown-menu");
+    dropDownMenu.setAttribute("aria-labelledby", "dropdownMenuButton1");
+    dropdownDiv.appendChild(dropDownMenu);
+
+    for(let i = 0; i < orderOptionsArray.length; i++){
+        let dropDownItem = document.createElement("li");
+        dropDownMenu.appendChild(dropDownItem);
+
+        let dropDownItemContent = document.createElement("a");
+        dropDownItemContent.setAttribute("class", "dropdown-item");
+        dropDownItemContent.style.userSelect = "none";
+        dropDownItemContent.textContent = orderOptionsArray[i]
+
+        dropDownItemContent.addEventListener("click", () => {
+            orderFunctionsArray[i](chartGraph, dataToSort);
+        })
+
+        dropDownItem.appendChild(dropDownItemContent);
+    }
+
+    referenceGraph.parentNode.insertBefore(dropdownDiv, referenceGraph);
+}
+
+ function CreateGraph(graphConfigObject){
     var graphCanvas = document.createElement("canvas");
-    graphCanvas.setAttribute("class", graphClass);
-    graphCanvas.setAttribute("id", graphId);
-    graphCanvas.setAttribute("width", graphWidth);
-    graphCanvas.setAttribute("height", graphHeight);
-    graphCanvas.setAttribute("aria-label", graphAriaLabel);
-    graphCanvas.setAttribute("role", graphRole);
+    graphCanvas.setAttribute("class", graphConfigObject.graphClass);
+    graphCanvas.setAttribute("id", graphConfigObject.graphId);
+    graphCanvas.setAttribute("width", graphConfigObject.graphWidth);
+    graphCanvas.setAttribute("height", graphConfigObject.graphHeight);
+    graphCanvas.setAttribute("aria-label", graphConfigObject.graphAriaLabel);
+    graphCanvas.setAttribute("role", graphConfigObject.graphRole);
 
     var ctx = graphCanvas.getContext("2d");
     var data = {
-    labels: graphLabels,
-    datasets: graphDatas
+    labels: graphConfigObject.graphLabels,
+    datasets: graphConfigObject.graphDatas
     };
 
-    var options = graphOptions;
-
     var config = {
-    type: graphConfigType,
+    type: graphConfigObject.graphConfigType,
     data: data,
-    options: options
+    options: graphConfigObject.graphOptions
     };
 
     var graphChart = new Chart(ctx, config);
 
-    if(parentElement != null){
-        parentElement.appendChild(graphCanvas);
+    if(graphConfigObject.parentElement != null){
+        graphConfigObject.parentElement.appendChild(graphCanvas);
     }
 
-    if(referenceTable != null){
-        referenceTable.parentNode.insertBefore(graphCanvas, referenceTable);
+    if(graphConfigObject.referenceTable != null){
+        graphConfigObject.referenceTable.parentNode.insertBefore(graphCanvas, graphConfigObject.referenceTable);
     }
 
     return graphChart;
@@ -292,4 +567,42 @@ function hasNumber(string){
  */
 function randomNumber0Max(rangeMax){
     return (Math.random()* rangeMax);
+}
+
+/**
+ * Remove extra spaces from the given string
+ * @param {String} string The string to remove extra spaces from
+ * @returns the cleaned up string (without extra spaces)
+ */
+function RemoveExtraSpaces(string){
+    return string.replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Remove exposant characters from the given string
+ * @param {String} string The string to remove exposant characters from
+ * @returns the cleaned up string (without exposant characters)
+ */
+function RemoveExposantCharacters(string){
+    string = string.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, "");
+    return string.replace(/\(\s*\)/g, "");
+}
+
+/**
+ * Get an average of datas numbers
+ * @param {Array} datasArray Array of numbers to get average from
+ * @returns average of all the given datas
+ */
+function GetAverage(datasArray){
+    let sum = 0;
+    let dataCount = 0;
+
+    datasArray.forEach(element => {
+        sum += element;
+        dataCount++;
+    });
+
+    var average = sum / dataCount;
+
+    return average;
 }
