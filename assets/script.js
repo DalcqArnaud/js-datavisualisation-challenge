@@ -89,35 +89,32 @@ table2.parentNode.insertBefore(graph2Div, table2);
 var graph3 = null;
 var iterationCount = 0;
 
-getDataPoints();
+getAPIData();
 
-function getDataPoints()
+/**
+ * Get data from API each second
+ */
+function getAPIData()
 {
     fetch("https://canvasjs.com/services/data/datapoints.php", {cache: "reload"})
     .then(response => {
         return response.json();
     })
     .then(datapoints => {
-        UpdateGraph(datapoints);
+        HandleAPIData(datapoints);
     });
 
     setTimeout(() => {
-        getDataPoints();
+        getAPIData();
     }, 1000);
 }
 
-function UpdateGraph(dataArray){
-    if(graph3 != null){
-        var tempLabelArray = [];
-        var tempDataArray = [];
-        dataArray.forEach(element => {
-            tempLabelArray.push((iterationCount * dataArray.length) + element[0]);
-            var newData = [iterationCount * dataArray.length + element[0], element[1]];
-            tempDataArray.push(newData);
-        });
-        addData(graph3, tempLabelArray, tempDataArray);
-        iterationCount++;
-    }else{
+/**
+ * Process the given API datas to we usable for the graph
+ * @param {Array} dataArray Array of data
+ */
+function HandleAPIData(dataArray){
+    if(graph3 == null){
         var graph3AriaLabel = "Example live graph";
         var graph3DataName = "Remote Data"
         var tempLabelArray = [];
@@ -127,12 +124,28 @@ function UpdateGraph(dataArray){
         var graphServerDataObjectsArray = CreateGraphDataObjectsArray(1, dataArray, graph3DataName, mainColText, secondColText, 0, 10);
         graph3 = CreateGraph(null, bodyContent, "graphServer", "graphServer", "800px", "400px", graph3AriaLabel, "img", tempLabelArray, graphServerDataObjectsArray, {}, "line");
         iterationCount++;
+    }else{
+        var tempLabelArray = [];
+        var tempDataArray = [];
+        dataArray.forEach(element => {
+            tempLabelArray.push((iterationCount * dataArray.length) + element[0]);
+            var newData = [iterationCount * dataArray.length + element[0], element[1]];
+            tempDataArray.push(newData);
+        });
+        addData(graph3, tempLabelArray, tempDataArray);
+        iterationCount++;
     }
 }
 
 //////////////////////////////////////////////////////////////////////////// GENERALS FUNCTIONS ////////////////////////////////////////////////////////////////////////////
 
 
+/**
+ * Add datas and update a Chart with them
+ * @param {Chart} chart The chart that you want to add datas
+ * @param {Array} label labels to add to the chart
+ * @param {Array} dataPoints Points to add to the chart
+ */
 function addData(chart, label, dataPoints) {
     for(let i in label){
         chart.config.data.labels.push(label[i]);
@@ -198,15 +211,15 @@ function CreateGraph(parentElement, referenceTable, graphClass, graphId, graphWi
 }
 
 /**
- * 
+ * Function to create and set up data objects to be usable for the graph
  * @param {Number} objectAmount The amount of data Objects that it create
- * @param {Array} datasArray 
- * @param {Array} dataLabelsArray 
- * @param {String} color 
- * @param {String} secondaryColor 
- * @param {Number} pointRadius 
- * @param {Number} pointRadiusHover The radius of the 
- * @returns 
+ * @param {Array} datasArray The data to give for each object
+ * @param {Array} dataLabelsArray The labels to give for each object
+ * @param {String} color The main color (used for first object)
+ * @param {String} secondaryColor The secondary color (used for the second object)
+ * @param {Number} pointRadius The radius of points on the graph
+ * @param {Number} pointRadiusHover The radius of points on the graph when being hover
+ * @returns {Array} Array of created Objects
  */
 function CreateGraphDataObjectsArray(objectAmount, datasArray, dataLabelsArray, color, secondaryColor, pointRadius, pointRadiusHover){
     var dataObjectsArray = [];
@@ -246,6 +259,12 @@ function CreateGraphDataObjectsArray(objectAmount, datasArray, dataLabelsArray, 
     return dataObjectsArray;
 }
 
+/**
+ * Generate the same color (than the given color) but with a new opacity value
+ * @param {String} colorString The color string to change opacity
+ * @param {Number} newOpacity The new opacity value
+ * @returns {String} the new color string
+ */
 function changeColorOpacity(colorString, newOpacity){
     let colorChannels = colorString.split(",");
     colorChannels[colorChannels.length - 1] = (" " + newOpacity + ")");
