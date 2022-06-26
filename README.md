@@ -13,6 +13,7 @@ js-datavisualisation-challenge is a project to practise/learn how to deal with :
 ### Github page
 
 You can see the final result on the Github page [here](https://dalcqarnaud.github.io/js-datavisualisation-challenge/)
+
 ---
 
 ![Graph 1](./images/graph1.PNG)
